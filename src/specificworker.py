@@ -24,6 +24,9 @@ import matplotlib.pyplot as plt
 from PySide import *
 from genericworker import *
 
+#variable global
+state = 'init'
+
 ROBOCOMP = ''
 try:
 	ROBOCOMP = os.environ['ROBOCOMP']
@@ -88,20 +91,30 @@ class SpecificWorker(GenericWorker):
 		#print nx.shortest_path(g, source="3", target="12")
 		nx.draw_networkx(g, posiciones)
 		plt.show()
-		
+
+        
+
+	def nodoCercano(self):
+	    bState = RoboCompDifferentialRobot.Bstate()
+	    differentialrobot_proxy.getBaseState(bState)
+	    r = (bState.x , bState.z)
+	    dist = lambda r,n: (r[0]-n[0])**2+(r[1]-n[1])**2
+	    #funcion que devuele el nodo mas cercano al robot
+	    return  sorted(list (( n[0] ,dist(n[1],r)) for n in posiciones.items() ), key=lambda s: s[1])[0][0]
+
+
 		    
 		      
 		    
 
 	@QtCore.Slot()
 	def compute(self):
-		print 'SpecificWorker.compute...'
-		
+		global state
 		switch = { 
-		  'i':EDOi, 
-		   0 :EDO0, 
-		   1 :EDO1, 
-		   2 :EDO2, 
+		  'init':fichero, 
+		  'Ti':EDO0, 
+		  'Pi':EDO1, 
+		  'Go':EDO2, 
 		} 
 		#try:
 		#	self.differentialrobot_proxy.setSpeedBase(100, 0)
