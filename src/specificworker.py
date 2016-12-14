@@ -24,8 +24,8 @@ import matplotlib.pyplot as plt
 from PySide import *
 from genericworker import *
 
-#variable global
-state = 'init'
+# Variable global
+#estado
 
 ROBOCOMP = ''
 try:
@@ -49,12 +49,22 @@ from RoboCompDifferentialRobot import *
 
 
 class SpecificWorker(GenericWorker):
+  	posiciones = {}
+	ruta = (71)
+	estado = 'init'
 	def __init__(self, proxy_map):
 		super(SpecificWorker, self).__init__(proxy_map)
 		self.timer.timeout.connect(self.compute)
 		self.Period = 2000
 		self.timer.start(self.Period)
 		self.fichero()
+		self.nodoCercano()
+		self.state =  {
+		  'init': self.initState, 
+		  'Ti':1, 
+		  'Pi':2, 
+		  'Go':3, 
+		} 
 
 	def setParams(self, params):
 		#try:
@@ -67,7 +77,6 @@ class SpecificWorker(GenericWorker):
 		return True
 	
 	def fichero(self):
-		posiciones = {}
 		fich = open('puntos.txt', 'r')
 		with fich as f:
 		  g=nx.Graph()
@@ -75,11 +84,11 @@ class SpecificWorker(GenericWorker):
 		    l=line.split()
 		    if l[0] == "N":
 		      g.add_node(l[1], x=l[2], z=l[3], tipo=l[4])
-		      posiciones[l[1]] = (float(l[2]), float (l[3]))
+		      self.posiciones[l[1]] = (float(l[2]), float (l[3]))
 		    elif line[0] == "E":  
 		      g.add_edge(l[1], l[2])
 		fich.close()
-		print posiciones
+		print self.posiciones
 		img  = plt.imread("plano.png")
 		plt.imshow(img, extent = ([-12284, 25600, -3840, 9023]))
 		#nx.draw_networkx_nodes(g, posiciones)
@@ -89,39 +98,33 @@ class SpecificWorker(GenericWorker):
 		#print g.nodes()
 		#print g.number_of_nodes()
 		#print nx.shortest_path(g, source="3", target="12")
-		nx.draw_networkx(g, posiciones)
+		nx.draw_networkx(g, self.posiciones)
 		plt.show()
 
         
 
 	def nodoCercano(self):
-	    bState = RoboCompDifferentialRobot.Bstate()
-	    differentialrobot_proxy.getBaseState(bState)
+	    bState = TBaseState()
+	    bState= self.differentialrobot_proxy.getBaseState()
+	    print bState
 	    r = (bState.x , bState.z)
 	    dist = lambda r,n: (r[0]-n[0])**2+(r[1]-n[1])**2
 	    #funcion que devuele el nodo mas cercano al robot
-	    return  sorted(list (( n[0] ,dist(n[1],r)) for n in posiciones.items() ), key=lambda s: s[1])[0][0]
+	    return  sorted(list (( n[0] ,dist(n[1],r)) for n in self.posiciones.items() ), key=lambda s: s[1])[0][0]
 
-
+	  
+	def initState(self):
+	    nodo = self.nodoCercano()
+	    print nodo
+	    
 		    
 		      
 		    
 
 	@QtCore.Slot()
 	def compute(self):
-		global state
-		switch = { 
-		  'init':fichero, 
-		  'Ti':EDO0, 
-		  'Pi':EDO1, 
-		  'Go':EDO2, 
-		} 
-		#try:
-		#	self.differentialrobot_proxy.setSpeedBase(100, 0)
-		#except Ice.Exception, e:
-		#	traceback.print_exc()
-		#	print e
-		return True
+	  self.state[self.estado]()
+		
 
 
 
