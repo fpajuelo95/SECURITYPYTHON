@@ -61,8 +61,8 @@ class SpecificWorker(GenericWorker):
 		self.nodoCercano()
 		self.state =  {
 		  'init': self.initState, 
-		  'Ti':1, 
-		  'Pi':2, 
+		  'Ti':self.Ti, 
+		  'Pi':self.Pi, 
 		  'Go':3, 
 		} 
 
@@ -114,10 +114,33 @@ class SpecificWorker(GenericWorker):
 
 	  
 	def initState(self):
-	    nodo = self.nodoCercano()
-	    print nodo
+	    print 'InitState.'
+	    self.nodoActual = self.nodoCercano()
+	    self.ruta = [66,67]
+	    self.estado += 'Ti'
 	    
+	
+	def Ti(self):
+	  if len(self.ruta) == 0:
+	    self.State = 0 
+	    return None
+	  print 'Ti.'
+	  self.nodoActual = self.nodoCercano()
+	  self.nodoActual = 71
+	  self.camino = nx.shortest_path(g,source=str(self.nodoActual), target=str(self.ruta[0]));
+	  self.ruta.pop(0)
+	  self.nodoActual = 54
+	  print self.ruta
+	  print self.camino
+	  self.State += 'Pi'
 		    
+	def Pi(self):
+	   if len(self.camino) == 0:
+	    self.State = 1 
+	    return None
+	  #obtener posicion nodo objetivo. self.posiciones[idnodo]
+	  self.State+=1
+	  return None # llamada a go con valores del nodo.
 		      
 		    
 
