@@ -1,2 +1,0 @@
-/home/salabeta/robocomp/components/parastroROB/SECURITYPYTHON/CMakeFiles/edit_cache.dir
-/home/salabeta/robocomp/components/parastroROB/SECURITYPYTHON/CMakeFiles/rebuild_cache.dir
