@@ -158,9 +158,4 @@ class SpecificWorker(GenericWorker):
 	@QtCore.Slot()
 	def compute(self):
 	  self.state[self.estado]()
-		
-
-
-
-
-
+	
