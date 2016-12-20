@@ -50,7 +50,7 @@ from RoboCompDifferentialRobot import *
 
 class SpecificWorker(GenericWorker):
   	posiciones = {}
-	ruta = (71)
+	ruta = [71,35]
 	estado = 'init'
 	def __init__(self, proxy_map):
 		super(SpecificWorker, self).__init__(proxy_map)
@@ -61,9 +61,9 @@ class SpecificWorker(GenericWorker):
 		self.nodoCercano()
 		self.state =  {
 		  'init': self.initState, 
-		  'Ti':1, 
-		  'Pi':2, 
-		  'Go':3, 
+		  'Ti': self.ti, 
+		  'Pi': self.pi, 
+		  'Go': self.go, 
 		} 
 
 	def setParams(self, params):
@@ -79,18 +79,18 @@ class SpecificWorker(GenericWorker):
 	def fichero(self):
 		fich = open('puntos.txt', 'r')
 		with fich as f:
-		  g=nx.Graph()
+		  self.g=nx.Graph()
 		  for line in f:
 		    l=line.split()
 		    if l[0] == "N":
-		      g.add_node(l[1], x=l[2], z=l[3], tipo=l[4])
+		      self.g.add_node(l[1], x=l[2], z=l[3], tipo=l[4])
 		      self.posiciones[l[1]] = (float(l[2]), float (l[3]))
 		    elif line[0] == "E":  
-		      g.add_edge(l[1], l[2])
+		      self.g.add_edge(l[1], l[2])
 		fich.close()
 		print self.posiciones
 		img  = plt.imread("plano.png")
-		plt.imshow(img, extent = ([-12284, 25600, -3840, 9023]))
+		#plt.imshow(img, extent = ([-12284, 25600, -3840, 9023]))
 		#nx.draw_networkx_nodes(g, posiciones)
 		#nx.draw_networkx_edges(g, posiciones)
 		#nx.draw_networkx_labels(g, posiciones)
@@ -98,15 +98,14 @@ class SpecificWorker(GenericWorker):
 		#print g.nodes()
 		#print g.number_of_nodes()
 		#print nx.shortest_path(g, source="3", target="12")
-		nx.draw_networkx(g, self.posiciones)
-		plt.show()
+		#nx.draw_networkx(g, self.posiciones)
+		#plt.show()
 
         
 
 	def nodoCercano(self):
 	    bState = TBaseState()
 	    bState= self.differentialrobot_proxy.getBaseState()
-	    print bState
 	    r = (bState.x , bState.z)
 	    dist = lambda r,n: (r[0]-n[0])**2+(r[1]-n[1])**2
 	    #funcion que devuele el nodo mas cercano al robot
@@ -114,13 +113,48 @@ class SpecificWorker(GenericWorker):
 
 	  
 	def initState(self):
-	    nodo = self.nodoCercano()
-	    print nodo
+	  print "Init"
+	  self.estado = 'Ti'
 	    
+	def ti(self):
+	  if len(self.ruta)== 0:
+	    self.estado = 'init'
+	    return
+	  
+	  print "Ti --> Nodo cercano."
+	  self.listan = nx.shortest_path(self.g, source=str(self.nodoCercano()), target=str(self.ruta[0]))
+	  print self.listan
+	  self.ruta.pop(0)
+	  self.estado = 'Pi'
+	  
+	def pi(self):
+	  print "Pi"
+	  if len(self.listan)== 0:
+	    self.estado = 'Ti'
+	    return
+	  
+	  self.nodoA = self.listan[0]
+	  self.listan.pop(0)
+	  try:
+	    print "Posicion target: ", self.posiciones[self.nodoA][0], self.posiciones[self.nodoA][1]
+	    self.gotopoint_proxy.go("",self.posiciones[self.nodoA][0], self.posiciones[self.nodoA][1], 0.3)
+	    
+	  except Ice.Exception as e:
+	    print e
+	    
+	  self.estado = "Go"
+	  
+	def go(self):
+	  print "Go"
+	  try:
+	    if self.gotopoint_proxy.atTarget():
+		self.estado = 'Pi'
+		print "Nodo alcanzado", self.nodoA
+		return
+	      
+	  except Ice.Exception as e:
+	      print e
 		    
-		      
-		    
-
 	@QtCore.Slot()
 	def compute(self):
 	  self.state[self.estado]()
