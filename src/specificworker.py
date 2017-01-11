@@ -50,15 +50,15 @@ from RoboCompDifferentialRobot import *
 
 class SpecificWorker(GenericWorker):
   	posiciones = {}
-	ruta = [71,35]
+	ruta = [10,61]
 	estado = 'init'
+	
 	def __init__(self, proxy_map):
 		super(SpecificWorker, self).__init__(proxy_map)
 		self.timer.timeout.connect(self.compute)
 		self.Period = 2000
 		self.timer.start(self.Period)
 		self.fichero()
-		self.nodoCercano()
 		self.state =  {
 		  'init': self.initState, 
 		  'Ti': self.ti, 
@@ -83,13 +83,13 @@ class SpecificWorker(GenericWorker):
 		  for line in f:
 		    l=line.split()
 		    if l[0] == "N":
-		      self.g.add_node(l[1], x=l[2], z=l[3], tipo=l[4])
+		      self.g.add_node(l[1], x=float(l[2]), z=float(l[3]), tipo=l[4])
 		      self.posiciones[l[1]] = (float(l[2]), float (l[3]))
 		    elif line[0] == "E":  
 		      self.g.add_edge(l[1], l[2])
 		fich.close()
 		print self.posiciones
-		img  = plt.imread("plano.png")
+		#img  = plt.imread("plano.png")
 		#plt.imshow(img, extent = ([-12284, 25600, -3840, 9023]))
 		#nx.draw_networkx_nodes(g, posiciones)
 		#nx.draw_networkx_edges(g, posiciones)
@@ -123,8 +123,8 @@ class SpecificWorker(GenericWorker):
 	  
 	  print "Ti --> Nodo cercano."
 	  self.listan = nx.shortest_path(self.g, source=str(self.nodoCercano()), target=str(self.ruta[0]))
-	  print self.listan
 	  self.ruta.pop(0)
+	  print self.listan
 	  self.estado = 'Pi'
 	  
 	def pi(self):
@@ -132,8 +132,8 @@ class SpecificWorker(GenericWorker):
 	  if len(self.listan)== 0:
 	    self.estado = 'Ti'
 	    return
-	  
 	  self.nodoA = self.listan[0]
+	  print "Nodo actual" + str(self.nodoA) 
 	  self.listan.pop(0)
 	  try:
 	    print "Posicion target: ", self.posiciones[self.nodoA][0], self.posiciones[self.nodoA][1]
